@@ -1,28 +1,158 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="de">
 <head>
-
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="https://glitch.com/favicon.ico" />
-
-  <title>Hello World!</title>
-
-  <style>
-    iframe {
-        width: 100%;
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-        border: 0;
-    }
-  </style>
-
+<meta charset="UTF-8">
+<title>Meine Aufgaben-Planer</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #fdf6f0;
+  color: #333;
+  margin: 20px;
+  padding: 0;
+}
+h1 {
+  text-align: center;
+}
+#taskForm {
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+  margin: 0 auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px #ccc;
+}
+input, select, button {
+  padding: 10px;
+  margin: 5px 0;
+  font-size: 16px;
+}
+button {
+  background-color: #f7c59f;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+#taskList {
+  max-width: 400px;
+  margin: 20px auto;
+}
+.task {
+  background-color: #e6e6e6;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.task.done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.task button {
+  background-color: #ff6666;
+  padding: 5px 10px;
+}
+</style>
 </head>
-
 <body>
-    <iframe src="https://glitchdotcom.github.io/compute-origin"></iframe>
-</body>
 
+<h1>📅 Meine Aufgaben-Planer</h1>
+
+<div id="taskForm">
+  <input type="text" id="taskTitle" placeholder="Aufgabe...">
+  <input type="date" id="taskDate">
+  <input type="time" id="taskTime">
+  <select id="taskRepeat">
+    <option value="nie">Nie</option>
+    <option value="täglich">Täglich</option>
+    <option value="wöchentlich">Wöchentlich</option>
+  </select>
+  <button onclick="addTask()">Hinzufügen</button>
+</div>
+
+<div id="taskList"></div>
+
+<script>
+// Aufgaben laden
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+function saveTasks() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+// Aufgaben anzeigen
+function renderTasks() {
+  const list = document.getElementById("taskList");
+  list.innerHTML = "";
+  tasks.forEach((task, index) => {
+    const div = document.createElement("div");
+    div.className = "task";
+    if(task.done) div.classList.add("done");
+    div.innerHTML = `
+      <span>${task.date} ${task.time} - ${task.title} (${task.repeat})</span>
+      <div>
+        <button onclick="toggleDone(${index})">✔</button>
+        <button onclick="deleteTask(${index})">✖</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// Neue Aufgabe hinzufügen
+function addTask() {
+  const title = document.getElementById("taskTitle").value;
+  const date = document.getElementById("taskDate").value;
+  const time = document.getElementById("taskTime").value;
+  const repeat = document.getElementById("taskRepeat").value;
+
+  if(title.trim() === "" || date === "" || time === "") return alert("Bitte alles ausfüllen!");
+
+  const task = {title, date, time, repeat, done: false};
+  tasks.push(task);
+  saveTasks();
+  renderTasks();
+  notifyTask(task);
+
+  document.getElementById("taskTitle").value = "";
+  document.getElementById("taskDate").value = "";
+  document.getElementById("taskTime").value = "";
+}
+
+// Aufgabe ab-/anwählen
+function toggleDone(index) {
+  tasks[index].done = !tasks[index].done;
+  saveTasks();
+  renderTasks();
+}
+
+// Aufgabe löschen
+function deleteTask(index) {
+  tasks.splice(index,1);
+  saveTasks();
+  renderTasks();
+}
+
+// Notification
+function notifyTask(task) {
+  if("Notification" in window) {
+    Notification.requestPermission().then(permission => {
+      if(permission === "granted") {
+        new Notification("Neue Aufgabe hinzugefügt!", {
+          body: `${task.title} um ${task.time}`,
+        });
+      }
+    });
+  }
+}
+
+// Automatisch rendern beim Laden
+renderTasks();
+</script>
+
+</body>
 </html>
